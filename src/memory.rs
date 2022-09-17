@@ -23,6 +23,10 @@ impl Memory {
         &mut self.buf[addr]
     }
 
+    pub fn as_slice(&self) -> &[u8] {
+        &self.buf[..]
+    }
+
     pub fn read_byte(&self, addr: usize) -> u8 {
         self.buf[addr]
     }
