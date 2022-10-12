@@ -6,4 +6,18 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-fltk = "1.3.15"
+
+# SDL2 Dependencies
+sdl2 = "0.35"
+
+# Imgui Dependencies ------------------------------------
+# Imgui
+#imgui = "0.8.2"
+
+# Imgui renderer
+#imgui-wgpu = "0.20.0" # Helps imgui translate to wgpu
+#wgpu = "0.13.1"
+
+# Imgui backend
+#winit = "0.27.3"
+# -------------------------------------------------------
