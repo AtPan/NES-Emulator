@@ -1,30 +1,30 @@
-use super::View;
+use super::{View, DebugWindow};
 
 use sdl2::{
     video::WindowBuildError,
     IntegerOrSdlError,
+    ttf,
 };
 
-pub struct ViewBuilder {
+pub const DEBUG_WINDOW_WIDTH: u32 = 245;
+
+pub struct ViewBuilder<'a> {
     width: u32,
     height: u32,
     scale: u32,
-    debug: bool,
+    debug: Option<(&'a ttf::Sdl2TtfContext, u32)>,
 }
 
-impl Default for ViewBuilder {
+impl Default for ViewBuilder<'_> {
     fn default() -> Self {
-        ViewBuilder { width: 256, height: 240, scale: 1, debug: false }
+        ViewBuilder { width: 256, height: 240, scale: 1, debug: None }
     }
 }
 
-impl ViewBuilder {
+impl<'a> ViewBuilder<'a> {
     pub fn with_scale(mut self, scale: u32) -> Self {
         self.width *= scale;
         self.height *= scale;
-        if self.debug {
-            self.width += 200 * (scale - self.scale);
-        }
         self.scale = scale;
         self
     }
@@ -32,19 +32,25 @@ impl ViewBuilder {
     pub fn with_size(mut self, width: u32, height: u32) -> Self {
         self.height = height * self.scale;
         self.width = width * self.scale;
-        if self.debug {
-            self.width += 200 * self.scale;
-        }
         self
     }
 
-    pub fn as_debug(mut self) -> Self {
-        self.debug = true;
-        self.width += 200 * self.scale;
+    pub fn as_debug(mut self, font_render: &'a ttf::Sdl2TtfContext, line_height: u32) -> Self {
+        self.debug = Some((font_render, line_height));
         self
     }
 
-    pub fn build(self) -> Result<View, String> {
+    pub fn build(self) -> Result<View<'a>, String> {
+        let mut window_width: u32 = self.width;
+        let window_height: u32 = self.height;
+        let debug_window = match self.debug {
+            Some((render, line_height)) => {
+                window_width += DEBUG_WINDOW_WIDTH * self.scale;
+                Some(DebugWindow::new(DEBUG_WINDOW_WIDTH * self.scale, self.height, self.width, render, line_height))
+            },
+            None => None,
+        };
+
         let context = match sdl2::init() {
             Ok(c) => c,
             Err(e) => return Err(format!("Error initializing SDL2: {}", e)),
@@ -53,7 +59,7 @@ impl ViewBuilder {
             Ok(v) => v,
             Err(e) => return Err(format!("Error initializing SDL2 Video Subsystem: {}", e)),
         };
-        let window = match video.window("Demo", self.width, self.height)
+        let window = match video.window("Demo", window_width, window_height)
             .position_centered()
             .build() {
 
@@ -78,8 +84,14 @@ impl ViewBuilder {
         };
 
         Ok(View {
-            context, video, canvas, event, debug_window: self.debug, scale: self.scale * 8,
+            context,
+            canvas,
+            event,
+            video,
+            debug: debug_window,
+            height: self.height,
+            width: self.width,
+            scale: self.scale * 8,
         })
-
     }
 }
