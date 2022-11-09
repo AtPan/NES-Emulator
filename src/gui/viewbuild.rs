@@ -6,7 +6,7 @@ use sdl2::{
     ttf,
 };
 
-pub const DEBUG_WINDOW_WIDTH: u32 = 245;
+pub const DEBUG_WINDOW_WIDTH: u32 = 255;
 
 pub struct ViewBuilder<'a> {
     width: u32,
@@ -92,6 +92,7 @@ impl<'a> ViewBuilder<'a> {
             height: self.height,
             width: self.width,
             scale: self.scale * 8,
+            frame: [0; 256 * 240]
         })
     }
 }
