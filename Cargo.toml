@@ -8,7 +8,11 @@ edition = "2021"
 [dependencies]
 
 # SDL2 Dependencies
-sdl2 = "0.35"
+
+[dependencies.sdl2]
+version = "0.35"
+default-features = false
+features = ["ttf"]
 
 # Imgui Dependencies ------------------------------------
 # Imgui
