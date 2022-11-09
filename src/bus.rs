@@ -1,47 +1,45 @@
-use crate::memory::{Memory, Endian};
-
 #[derive(Default)]
 pub struct Bus {
-    address: u16,
-    data: u8,
-    pub read: bool,
-    memory: Memory,
+    mem: Vec<u8>,
+    pub len: u32,
 }
 
 impl Bus {
     pub fn new() -> Self {
         Bus {
-            address: 0,
-            data: 0,
-            read: true,
-            memory: Memory::new(0x800, Endian::Little),
+            mem: vec![0; 0x1f400],
+            len: 0x1f400,
         }
     }
 
-    #[inline(always)]
-    pub fn set_address(&mut self, addr: u16) {
-        self.address = addr & 0x07ff;
+    pub fn as_mut(&mut self, addr: u32) -> &mut u8 {
+        &mut self.mem[addr as usize]
     }
 
-    #[inline(always)]
-    pub fn set_data(&mut self, dat: u8) {
-        self.data = dat;
+    pub fn as_slice(&self, start: u32) -> &[u8] {
+        &self.mem[(start as usize)..]
     }
 
-    #[inline(always)]
-    pub fn read_address(&self) -> u16 {
-        self.address
+    pub fn as_mut_slice(&mut self, start: u32) -> &mut [u8] {
+        &mut self.mem[(start as usize)..]
     }
 
-    #[inline(always)]
-    pub fn read_data(&self) -> u8 {
-        self.data
+    pub fn read_byte(&self, addr: u32) -> u8 {
+        self.mem[(addr as usize & 0x07ff)]
     }
 
-    pub fn interact_mem_byte(&mut self) {
-        match self.read {
-            true => self.data = self.memory.read_byte(self.address as usize),
-            false => self.memory.write_byte(self.address as usize, self.data),
-        }
+    pub fn write_byte(&mut self, addr: u32, val: u8) {
+        self.mem[(addr as usize & 0x07ff)] = val;
+    }
+
+    pub fn read_word(&self, addr: u32) -> u16 {
+        let addr = addr & 0x07ff;
+        (self.mem[addr as usize] as u16) | ((self.mem[(addr as usize + 1)]) << 8) as u16
+    }
+
+    pub fn write_word(&mut self, addr: u32, val: u16) {
+        let addr = addr & 0x07ff;
+        self.mem[addr as usize] = (val >> 8) as u8;
+        self.mem[(addr as usize + 1)] = (val & 0xff) as u8;
     }
 }
