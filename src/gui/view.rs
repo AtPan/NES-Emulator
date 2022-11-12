@@ -1,5 +1,7 @@
-use std::process;
-use std::fmt::Write;
+use std::{
+    process,
+    fmt::Write,
+};
 
 use sdl2::{
     Sdl,
@@ -10,14 +12,15 @@ use sdl2::{
     event::Event,
     pixels::Color,
     rect::Rect,
-    keyboard::Keycode, ttf::FontStyle,
+    keyboard::Keycode,
+    ttf::FontStyle,
 };
 
 use crate::{
     processor::Processor,
-    bus::Bus,
+    memory::Bus,
+    DebugWindow,
 };
-use super::DebugWindow;
 
 pub struct View<'a> {
    pub context: Sdl,
@@ -35,7 +38,7 @@ pub const LINES_MOVED_PER_STROKE: u32 = 8;
 pub const BYTES_MOVED_PER_STROKE: u32 = LINES_MOVED_PER_STROKE * 16;
 
 impl View<'_> {
-    pub fn event_loop(&mut self, processor: Processor) {
+    pub fn event_loop(&mut self, processor: Processor<Bus>) {
         let mut debug_mem_addr_start: u32 = 0;
         let mut debug_stack_addr_offset: u32 = 0;
         let lines = if let Some(debug_window) = &self.debug { debug_window.lines } else { 0 };
