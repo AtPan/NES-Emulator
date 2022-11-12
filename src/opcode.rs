@@ -1,14 +1,4 @@
-pub type Instruction = (Opcode, AugmentOpcodeInfo);
-
-#[derive(Copy, Clone, Debug)]
-pub enum AugmentOpcodeInfo {
-    Implied,
-    Accumulator,
-    Immediate(u8), /* An Immediate 8-bit value */
-    MemoryByte(u16), /* A byte from memory at the indicated address */
-    MemoryWord(u16), /* A word from memory at the indicated address */
-    Address(u16),
-}
+pub type Instruction = (Opcode, MemAddressMode);
 
 #[derive(Copy, Clone)]
 pub enum MemAddressMode {
