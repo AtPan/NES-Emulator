@@ -49,12 +49,12 @@ impl View<'_> {
             for event in iter {
                 match event {
                     Event::Quit { .. } => break 'program_active,
-                    Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
+                    Event::KeyDown { keycode: Some(Keycode::Down), .. } => {
                         if debug_mem_addr_start + (lines_for_debug_mem * BYTES_MOVED_PER_STROKE) < processor.bus.len {
                             debug_mem_addr_start += BYTES_MOVED_PER_STROKE;
                         }
                     },
-                    Event::KeyDown { keycode: Some(Keycode::Down), .. } => {
+                    Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
                         if let Some(val) = debug_mem_addr_start.checked_sub(BYTES_MOVED_PER_STROKE) {
                             debug_mem_addr_start = val;
                         }
