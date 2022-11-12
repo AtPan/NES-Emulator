@@ -1,11 +1,9 @@
 use std::cmp::Ordering;
 use crate::register::*;
-use crate::opcode::*;
-use crate::memory::Memory;
 
-pub fn branch(pc: &mut RegisterWord, offset: u8) {
+pub fn branch(pc: &mut u16, offset: u8) {
     let offset: i8 = if offset & 0x80  == 0x80 { -128 } else { 0 } + ((offset & 0x7f) as i8);
-    *pc += offset;
+    *pc += offset as u16;
 }
 
 pub fn shift_right(status: &mut StatusRegister, target: &mut u8) {
@@ -52,23 +50,49 @@ pub fn shift_left(status: &mut StatusRegister, target: &mut u8) {
     status.clear_flag(clear);
 }
 
-pub fn decode_augmented_addr(aug: AugmentOpcodeInfo) -> Option<u16> {
-    match aug {
-        AugmentOpcodeInfo::Address(addr) | AugmentOpcodeInfo::MemoryByte(addr) => Some(addr),
+pub fn rotate_right(status: &mut StatusRegister, target: &mut u8) {
+    let mut set = Status::Mix(0);
+    let mut clear = Status::Carry | Status::Zero | Status::Negative;
 
-        _ => None,
+    if *target & 1 == 1 {
+        set |= Status::Carry | Status::Negative;
+        clear ^= Status::Carry | Status::Negative;
+    }
+    else if *target == 0 {
+        set |= Status::Zero;
+        clear ^= Status::Zero;
+    }
+
+    *target >>= 1;
+
+    status.set_flag(set);
+    status.clear_flag(clear);
+
+    if status.contains(Status::Carry) {
+        *target |= 0x80;
     }
 }
 
-pub fn decode_augmented_u8(memory: &Memory, aug: AugmentOpcodeInfo) -> Option<u8> {
-    match aug {
-        AugmentOpcodeInfo::Immediate(val) => Some(val),
-        AugmentOpcodeInfo::Address(addr) | AugmentOpcodeInfo::MemoryByte(addr) =>
-            Some(memory.read_byte(addr as usize)),
-        AugmentOpcodeInfo::MemoryWord(addr) =>
-            Some(memory.read_byte(memory.read_word(addr as usize) as usize)),
+pub fn rotate_left(status: &mut StatusRegister, target: &mut u8) {
+    let mut set = Status::Mix(0);
+    let mut clear = Status::Carry | Status::Zero | Status::Negative;
 
-        _ => None,
+    if *target & 0x80 == 0x80 {
+        set |= Status::Carry | Status::Negative;
+        clear ^= Status::Carry | Status::Negative;
+    }
+    else if *target == 0 {
+        set |= Status::Zero;
+        clear ^= Status::Zero;
+    }
+
+    *target <<= 1;
+
+    status.set_flag(set);
+    status.clear_flag(clear);
+
+    if status.contains(Status::Carry) {
+        *target |= 1;
     }
 }
 
@@ -87,11 +111,11 @@ pub fn format_bcd(val: u8) -> u8 {
     (nibble_high << 4) | nibble_low
 }
 
-pub fn compare_u8(status: &mut StatusRegister, reg: &RegisterChar, val: u8) {
+pub fn compare_u8(status: &mut StatusRegister, reg: u8, val: u8) {
     let mut set = Status::Mix(0);
     let mut clear = Status::Carry | Status::Zero | Status::Negative;
 
-    match reg.cmp(&RegisterChar(val)) {
+    match reg.cmp(&val) {
         Ordering::Less => {
             set |= Status::Negative;
             clear ^= Status::Negative;
@@ -108,10 +132,6 @@ pub fn compare_u8(status: &mut StatusRegister, reg: &RegisterChar, val: u8) {
 
     status.clear_flag(clear);
     status.set_flag(set);
-}
-
-pub fn load_u8_register(status: &mut StatusRegister, reg: &mut RegisterChar, val: u8) {
-    load_u8_memory(status, &mut reg.0, val);
 }
 
 pub fn load_u8_memory(status: &mut StatusRegister, mem: &mut u8, val: u8) {
